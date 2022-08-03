@@ -1,0 +1,69 @@
+# Ansible inventory created from ['bgp.yml', 'package:topology-defaults.yml']
+#
+---
+af:
+  ipv4: true
+bgp:
+  advertise_loopback: true
+  as: 65001
+  community:
+    ebgp:
+    - standard
+    ibgp:
+    - standard
+    - extended
+  ipv4: true
+  neighbors:
+  - as: 65100
+    ifindex: 1
+    ipv4: 10.1.0.9
+    name: l1
+    type: ebgp
+  - as: 65101
+    ifindex: 2
+    ipv4: 10.1.0.13
+    name: l2
+    type: ebgp
+  next_hop_self: true
+  router_id: 10.0.0.2
+box: ceos:4.28.1F
+clab:
+  env:
+    INTFTYPE: et
+  kind: ceos
+hostname: clab-basic-s2
+interfaces:
+- clab:
+    name: et1
+  ifindex: 1
+  ifname: Ethernet1
+  ipv4: 10.1.0.10/30
+  linkindex: 3
+  name: s2 -> l1
+  neighbors:
+  - ifname: Ethernet2
+    ipv4: 10.1.0.9/30
+    node: l1
+  role: external
+  type: p2p
+- clab:
+    name: et2
+  ifindex: 2
+  ifname: Ethernet2
+  ipv4: 10.1.0.14/30
+  linkindex: 4
+  name: s2 -> l2
+  neighbors:
+  - ifname: Ethernet2
+    ipv4: 10.1.0.13/30
+    node: l2
+  role: external
+  type: p2p
+loopback:
+  ipv4: 10.0.0.2/32
+mgmt:
+  ifname: Management0
+  ipv4: 192.168.121.102
+  mac: 08-4F-A9-00-00-02
+module:
+- bgp

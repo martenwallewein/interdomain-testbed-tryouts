@@ -1,0 +1,53 @@
+name: basic
+
+topology:
+  nodes:
+    s1:
+      kind: ceos
+      image: ceos:4.28.1F
+      group: as65000
+      env: {'INTFTYPE': 'et'}
+    s2:
+      kind: ceos
+      image: ceos:4.28.1F
+      group: as65001
+      env: {'INTFTYPE': 'et'}
+    l1:
+      kind: ceos
+      image: ceos:4.28.1F
+      group: as65100
+      env: {'INTFTYPE': 'et'}
+    l2:
+      kind: ceos
+      image: ceos:4.28.1F
+      group: as65101
+      env: {'INTFTYPE': 'et'}
+    h1:
+      kind: linux
+      image: python:3.9-alpine
+      group: 
+    h2:
+      kind: linux
+      image: python:3.9-alpine
+      group: 
+
+
+  links:
+  - endpoints:
+    - "s1:et1"
+    - "l1:et1"
+  - endpoints:
+    - "s1:et2"
+    - "l2:et1"
+  - endpoints:
+    - "s2:et1"
+    - "l1:et2"
+  - endpoints:
+    - "s2:et2"
+    - "l2:et2"
+  - endpoints:
+    - "l1:et3"
+    - "h1:eth1"
+  - endpoints:
+    - "l2:et3"
+    - "h2:eth1"

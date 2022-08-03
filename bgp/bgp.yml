@@ -1,0 +1,42 @@
+module: [ bgp ]
+name: basic
+provider: clab
+
+defaults:
+  device: eos
+  devices:
+    eos.clab.image: ceos:4.28.1F
+
+addressing:
+  router_id:
+    ipv4: 10.0.0.0/24
+    prefix: 32
+  p2p:
+    ipv4: 10.1.0.0/16
+    prefix: 30
+
+nodes:
+  s1:
+    bgp:
+      as: 65000
+  s2:
+    bgp:
+      as: 65001
+  l1:
+    bgp:
+      as: 65100
+  l2:
+    bgp:
+      as: 65101
+  h1:
+    device: linux
+  h2:
+    device: linux
+
+links:
+- s1-l1
+- s1-l2
+- s2-l1
+- s2-l2
+- h1-l1
+- h2-l2

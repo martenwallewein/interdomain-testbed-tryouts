@@ -1,0 +1,133 @@
+version: '3'
+services:
+
+  router1:
+    image: 'posix-router'
+    command: /root/router --config /share/conf/br1-ff00_0_110-1.toml
+    networks:
+      as1:
+        ipv4_address: 172.24.2.2
+      as1as2:
+        ipv4_address: 10.0.0.2
+    environment:
+      SCION_EXPERIMENTAL_BFD_DESIRED_MIN_TX: 5s
+      SCION_EXPERIMENTAL_BFD_DETECT_MULT: 5s
+      SCION_EXPERIMENTAL_BFD_REQUIRED_MIN_RX: 5s
+    volumes:
+      - ./gen/ASff00_0_110:/share/conf:ro
+      - vol_scion_disp_cs1-ff00_0_110-1:/run/shm/dispatcher:rw
+
+  router2:
+    image: 'posix-router'
+    command: /root/router --config /share/conf/br1-ff00_0_111-1.toml
+    networks:
+      as2:
+        ipv4_address: 172.24.4.2
+      as1as2:
+        ipv4_address: 10.0.0.3
+    environment:
+      SCION_EXPERIMENTAL_BFD_DESIRED_MIN_TX: 5s
+      SCION_EXPERIMENTAL_BFD_DETECT_MULT: 5s
+      SCION_EXPERIMENTAL_BFD_REQUIRED_MIN_RX: 5s
+    volumes:
+      - ./gen/ASff00_0_111:/share/conf:ro
+    #   - vol_scion_disp_cs1-ff00_0_111-1:/run/shm/dispatcher:rw
+
+  control1:
+    image: 'control'
+    command: bash /root/run.sh /share/conf/disp_cs1-ff00_0_110-1.toml /share/conf/cs1-ff00_0_110-1.toml
+    networks:
+      as1:
+        ipv4_address: 172.24.2.100
+    # depends_on:
+    #  - dispatcher1
+    volumes:
+      - ./gen/ASff00_0_110:/share/conf:ro
+      - ./gen-cache:/share/cache:rw
+      - ./gen-certs:/share/crypto:rw
+    #  - vol_scion_disp_cs1-ff00_0_110-1:/run/shm/dispatcher:rw
+
+  control2:
+    image: 'control'
+    command: bash /root/run.sh /share/conf/disp_cs1-ff00_0_111-1.toml /share/conf/cs1-ff00_0_111-1.toml
+    # depends_on:
+    #  - dispatcher2
+    networks:
+      as2:
+        ipv4_address: 172.24.4.100
+    volumes:
+      - ./gen/ASff00_0_111:/share/conf:ro
+      - ./gen-cache:/share/cache:rw
+      - ./gen-certs:/share/crypto:rw
+    #   - vol_scion_disp_cs1-ff00_0_111-1:/run/shm/dispatcher:rw
+
+    # dispatcher1:
+    #  command: /root/dispatcher --config  /share/conf/disp_cs1-ff00_0_110-1.toml
+    #  image: dispatcher
+    #  networks:
+    #    as1:
+    #      ipv4_address: 172.24.2.101
+    #  volumes:
+    #    - vol_scion_disp_cs1-ff00_0_110-1:/run/shm/dispatcher:rw
+    #    - ./gen/ASff00_0_110:/share/conf:rw
+
+    #dispatcher2:
+    #  command: /root/dispatcher --config  /share/conf/disp_cs1-ff00_0_111-1.toml
+    #  image: dispatcher
+    #  networks:
+    #    as2:
+    #      ipv4_address: 172.24.4.101
+    #  volumes:
+    #    - vol_scion_disp_cs1-ff00_0_111-1:/run/shm/dispatcher:rw
+    #    - ./gen/ASff00_0_111:/share/conf:rw
+
+  daemon1:
+    command: bash /root/run.sh /share/conf/disp_cs1-ff00_0_110-1.toml  /share/conf/sd.toml
+    # depends_on:
+    #  - dispatcher1
+    image: daemon
+    networks:
+      as1:
+        ipv4_address: 172.24.2.102
+    volumes:
+      - vol_scion_disp_cs1-ff00_0_110-1:/run/shm/dispatcher:rw
+      - ./gen-cache:/share/cache:rw
+      - ./gen-certs:/share/crypto:rw
+      - ./gen/ASff00_0_110:/share/conf:ro
+
+  daemon2:
+    command: bash /root/run.sh /share/conf/disp_cs1-ff00_0_111-1.toml  /share/conf/sd.toml
+    # depends_on:
+    #  - dispatcher2
+    image: daemon
+    networks:
+      as2:
+        ipv4_address: 172.24.4.102
+    volumes:
+      - vol_scion_disp_cs1-ff00_0_111-1:/run/shm/dispatcher:rw
+      - ./gen-cache:/share/cache:rw
+      - ./gen-certs:/share/crypto:rw
+      - ./gen/ASff00_0_111:/share/conf:ro
+
+networks:
+  as1:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: "172.24.2.0/24"
+  as1as2:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: "10.0.0.0/24"
+  as2:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: "172.24.4.0/24"
+volumes:
+  vol_scion_disp_cs1-ff00_0_110-1: null
+  vol_scion_disp_cs1-ff00_0_111-1: null

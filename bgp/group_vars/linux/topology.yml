@@ -1,0 +1,10 @@
+# Ansible inventory created from ['bgp.yml', 'package:topology-defaults.yml']
+#
+---
+ansible_connection: docker
+ansible_network_os: linux
+ansible_python_interpreter: auto_silent
+ansible_ssh_pass: vagrant
+ansible_user: root
+docker_shell: sh
+netlab_linux_distro: vanilla

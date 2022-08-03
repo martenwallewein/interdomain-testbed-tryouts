@@ -1,0 +1,248 @@
+networks:
+  scn_000:
+    driver: bridge
+    driver_opts:
+      com.docker.network.bridge.name: scn_000
+    ipam:
+      config:
+      - subnet: 172.20.0.0/29
+  scn_001:
+    driver: bridge
+    driver_opts:
+      com.docker.network.bridge.name: scn_001
+    ipam:
+      config:
+      - subnet: 172.20.0.8/29
+  scn_002:
+    driver: bridge
+    driver_opts:
+      com.docker.network.bridge.name: scn_002
+    ipam:
+      config:
+      - subnet: 172.20.0.16/29
+services:
+  scion_br1-ff00_0_110-1:
+    command:
+    - --config
+    - /share/conf/br1-ff00_0_110-1.toml
+    container_name: scion_br1-ff00_0_110-1
+    environment:
+      SCION_EXPERIMENTAL_BFD_DESIRED_MIN_TX: ${SCION_EXPERIMENTAL_BFD_DESIRED_MIN_TX}
+      SCION_EXPERIMENTAL_BFD_DETECT_MULT: ${SCION_EXPERIMENTAL_BFD_DETECT_MULT}
+      SCION_EXPERIMENTAL_BFD_REQUIRED_MIN_RX: ${SCION_EXPERIMENTAL_BFD_REQUIRED_MIN_RX}
+    image: posix-router
+    networks:
+      scn_000:
+        ipv4_address: 10.0.0.2
+      scn_001:
+        ipv4_address: 172.24.4.2
+    user: 1000:1000
+    volumes:
+    - /home/marten/go/src/github.com/scionproto/scion/topo-two/ASff00_0_110:/share/conf:ro
+  scion_br1-ff00_0_111-1:
+    command:
+    - --config
+    - /share/conf/br1-ff00_0_111-1.toml
+    container_name: scion_br1-ff00_0_111-1
+    environment:
+      SCION_EXPERIMENTAL_BFD_DESIRED_MIN_TX: ${SCION_EXPERIMENTAL_BFD_DESIRED_MIN_TX}
+      SCION_EXPERIMENTAL_BFD_DETECT_MULT: ${SCION_EXPERIMENTAL_BFD_DETECT_MULT}
+      SCION_EXPERIMENTAL_BFD_REQUIRED_MIN_RX: ${SCION_EXPERIMENTAL_BFD_REQUIRED_MIN_RX}
+    image: posix-router
+    networks:
+      scn_000:
+        ipv4_address: 10.0.0.3
+      scn_002:
+        ipv4_address: 172.24.4.2
+    user: 1000:1000
+    volumes:
+    - /home/marten/go/src/github.com/scionproto/scion/topo-two/ASff00_0_111:/share/conf:ro
+  scion_cs1-ff00_0_110-1:
+    command:
+    - --config
+    - /share/conf/cs1-ff00_0_110-1.toml
+    container_name: scion_cs1-ff00_0_110-1
+    depends_on:
+    - scion_disp_cs1-ff00_0_110-1
+    image: control
+    network_mode: service:scion_disp_cs1-ff00_0_110-1
+    user: 1000:1000
+    volumes:
+    - /home/marten/go/src/github.com/scionproto/scion/gen-cache:/share/cache:rw
+    - /home/marten/go/src/github.com/scionproto/scion/gen-certs:/share/crypto:rw
+    - /home/marten/go/src/github.com/scionproto/scion/topo-two/ASff00_0_110:/share/conf:ro
+    - vol_scion_disp_cs1-ff00_0_110-1:/run/shm/dispatcher:rw
+  scion_cs1-ff00_0_111-1:
+    command:
+    - --config
+    - /share/conf/cs1-ff00_0_111-1.toml
+    container_name: scion_cs1-ff00_0_111-1
+    depends_on:
+    - scion_disp_cs1-ff00_0_111-1
+    image: control
+    network_mode: service:scion_disp_cs1-ff00_0_111-1
+    user: 1000:1000
+    volumes:
+    - /home/marten/go/src/github.com/scionproto/scion/gen-cache:/share/cache:rw
+    - /home/marten/go/src/github.com/scionproto/scion/gen-certs:/share/crypto:rw
+    - /home/marten/go/src/github.com/scionproto/scion/topo-two/ASff00_0_111:/share/conf:ro
+    - vol_scion_disp_cs1-ff00_0_111-1:/run/shm/dispatcher:rw
+  scion_disp_cs1-ff00_0_110-1:
+    command:
+    - --config
+    - /share/conf/disp_cs1-ff00_0_110-1.toml
+    container_name: scion_disp_cs1-ff00_0_110-1
+    depends_on:
+      utils_chowner:
+        condition: service_started
+    extra_hosts:
+    - jaeger:172.17.0.1
+    image: dispatcher
+    networks:
+      scn_001:
+        ipv4_address: 172.24.2.100
+    user: 1000:1000
+    volumes:
+    - vol_scion_disp_cs1-ff00_0_110-1:/run/shm/dispatcher:rw
+    - /home/marten/go/src/github.com/scionproto/scion/topo-two/ASff00_0_110:/share/conf:rw
+  scion_disp_cs1-ff00_0_111-1:
+    command:
+    - --config
+    - /share/conf/disp_cs1-ff00_0_111-1.toml
+    container_name: scion_disp_cs1-ff00_0_111-1
+    depends_on:
+      utils_chowner:
+        condition: service_started
+    extra_hosts:
+    - jaeger:172.17.0.1
+    image: dispatcher
+    networks:
+      scn_002:
+        ipv4_address: 172.24.4.100
+    user: 1000:1000
+    volumes:
+    - vol_scion_disp_cs1-ff00_0_111-1:/run/shm/dispatcher:rw
+    - /home/marten/go/src/github.com/scionproto/scion/topo-two/ASff00_0_111:/share/conf:rw
+  scion_disp_tester_1-ff00_0_110:
+    command:
+    - --config
+    - /share/conf/disp_tester_1-ff00_0_110.toml
+    container_name: scion_disp_tester_1-ff00_0_110
+    depends_on:
+      utils_chowner:
+        condition: service_started
+    extra_hosts:
+    - jaeger:172.17.0.1
+    image: dispatcher
+    networks:
+      scn_001:
+        ipv4_address: 172.20.0.13
+    user: 1000:1000
+    volumes:
+    - vol_scion_disp_tester_1-ff00_0_110:/run/shm/dispatcher:rw
+    - /home/marten/go/src/github.com/scionproto/scion/topo-two/ASff00_0_110:/share/conf:rw
+  scion_disp_tester_1-ff00_0_111:
+    command:
+    - --config
+    - /share/conf/disp_tester_1-ff00_0_111.toml
+    container_name: scion_disp_tester_1-ff00_0_111
+    depends_on:
+      utils_chowner:
+        condition: service_started
+    extra_hosts:
+    - jaeger:172.17.0.1
+    image: dispatcher
+    networks:
+      scn_002:
+        ipv4_address: 10.0.0.21
+    user: 1000:1000
+    volumes:
+    - vol_scion_disp_tester_1-ff00_0_111:/run/shm/dispatcher:rw
+    - /home/marten/go/src/github.com/scionproto/scion/topo-two/ASff00_0_111:/share/conf:rw
+  scion_sd1-ff00_0_110:
+    command:
+    - --config
+    - /share/conf/sd.toml
+    container_name: scion_sd1-ff00_0_110
+    depends_on:
+    - scion_disp_cs1-ff00_0_110-1
+    extra_hosts:
+    - jaeger:172.17.0.1
+    image: daemon
+    networks:
+      scn_001:
+        ipv4_address: 172.24.4.101
+    user: 1000:1000
+    volumes:
+    - vol_scion_disp_cs1-ff00_0_110-1:/run/shm/dispatcher:rw
+    - /home/marten/go/src/github.com/scionproto/scion/gen-cache:/share/cache:rw
+    - /home/marten/go/src/github.com/scionproto/scion/gen-certs:/share/crypto:rw
+    - /home/marten/go/src/github.com/scionproto/scion/topo-two/ASff00_0_110:/share/conf:ro
+  scion_sd1-ff00_0_111:
+    command:
+    - --config
+    - /share/conf/sd.toml
+    container_name: scion_sd1-ff00_0_111
+    depends_on:
+    - scion_disp_cs1-ff00_0_111-1
+    extra_hosts:
+    - jaeger:172.17.0.1
+    image: daemon
+    networks:
+      scn_002:
+        ipv4_address: 172.24.4.102
+    user: 1000:1000
+    volumes:
+    - vol_scion_disp_cs1-ff00_0_111-1:/run/shm/dispatcher:rw
+    - /home/marten/go/src/github.com/scionproto/scion/gen-cache:/share/cache:rw
+    - /home/marten/go/src/github.com/scionproto/scion/gen-certs:/share/crypto:rw
+    - /home/marten/go/src/github.com/scionproto/scion/topo-two/ASff00_0_111:/share/conf:ro
+  tester_1-ff00_0_110:
+    container_name: tester_1-ff00_0_110
+    depends_on:
+    - scion_disp_tester_1-ff00_0_110
+    entrypoint: sh tester.sh
+    environment:
+      SCION_DAEMON: 172.24.4.101:30255
+      SCION_LOCAL_ADDR: 172.20.0.13
+    image: tester
+    network_mode: service:scion_disp_tester_1-ff00_0_110
+    privileged: true
+    volumes:
+    - vol_scion_disp_tester_1-ff00_0_110:/run/shm/dispatcher:rw
+    - /home/marten/go/src/github.com/scionproto/scion/logs:/share/logs:rw
+    - /home/marten/go/src/github.com/scionproto/scion/gen:/share/gen:rw
+    - /home/marten/go/src/github.com/scionproto/scion/gen-certs:/share/gen-certs:rw
+  tester_1-ff00_0_111:
+    container_name: tester_1-ff00_0_111
+    depends_on:
+    - scion_disp_tester_1-ff00_0_111
+    entrypoint: sh tester.sh
+    environment:
+      SCION_DAEMON: 172.24.4.102:30255
+      SCION_LOCAL_ADDR: 10.0.0.21
+    image: tester
+    network_mode: service:scion_disp_tester_1-ff00_0_111
+    privileged: true
+    volumes:
+    - vol_scion_disp_tester_1-ff00_0_111:/run/shm/dispatcher:rw
+    - /home/marten/go/src/github.com/scionproto/scion/logs:/share/logs:rw
+    - /home/marten/go/src/github.com/scionproto/scion/gen:/share/gen:rw
+    - /home/marten/go/src/github.com/scionproto/scion/gen-certs:/share/gen-certs:rw
+  utils_chowner:
+    command: chown -R 1000:1000 /mnt/volumes
+    image: busybox
+    network_mode: none
+    volumes:
+    - /etc/passwd:/etc/passwd:ro
+    - /etc/group:/etc/group:ro
+    - vol_scion_disp_cs1-ff00_0_110-1:/mnt/volumes/vol_scion_disp_cs1-ff00_0_110-1
+    - vol_scion_disp_tester_1-ff00_0_110:/mnt/volumes/vol_scion_disp_tester_1-ff00_0_110
+    - vol_scion_disp_cs1-ff00_0_111-1:/mnt/volumes/vol_scion_disp_cs1-ff00_0_111-1
+    - vol_scion_disp_tester_1-ff00_0_111:/mnt/volumes/vol_scion_disp_tester_1-ff00_0_111
+version: '2.4'
+volumes:
+  vol_scion_disp_cs1-ff00_0_110-1: null
+  vol_scion_disp_cs1-ff00_0_111-1: null
+  vol_scion_disp_tester_1-ff00_0_110: null
+  vol_scion_disp_tester_1-ff00_0_111: null
